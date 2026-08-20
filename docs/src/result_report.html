@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>模型结果图表报告</title>
+<style>
+  @page { size: A4; margin: 1.5cm 1.4cm; }
+  body { font-family: "PingFang SC", "Songti SC", serif; font-size: 10.5pt; line-height: 1.65; color: #1a1a1a; margin: 0; }
+  h1 { font-size: 19pt; color: #0d3b66; margin-bottom: 4px; }
+  h2 { font-size: 13pt; color: #0d3b66; border-bottom: 2px solid #0d3b66; padding-bottom: 4px; margin-top: 18px; }
+  p { margin: 4px 0 8px 0; }
+  table { border-collapse: collapse; width: 100%; margin: 8px 0 14px 0; font-size: 9.5pt; table-layout: fixed; }
+  th { background: #0d3b66; color: #fff; padding: 5px 7px; text-align: left; }
+  td { border: 1px solid #b8c4d0; padding: 5px 7px; vertical-align: top; }
+  img { width: 100%; max-width: 620px; display: block; margin: 6px auto; }
+  .meta { color: #666; font-size: 10pt; margin-bottom: 14px; }
+  .fig { margin: 10px 0; page-break-inside: avoid; }
+  .figcap { font-size: 9.5pt; color: #555; text-align: center; margin-top: 2px; }
+  .key { background: #eef7ee; border-left: 4px solid #2e7d32; padding: 8px 12px; margin: 8px 0; }
+  .pagebreak { page-break-before: always; }
+</style>
+</head>
+<body>
+
+<h1>中国发债主体信用风险预警模型 — 结果图表报告</h1>
+<div class="meta">作者：章建军 ｜ 2026年8月20日 ｜ 全部图表基于修复后数据与生产模型生成（与平台验证一致）</div>
+
+<h2>一、模型区分能力</h2>
+<div class="fig">
+<img src="../../zh_credit/output/charts/roc_curve.png" alt="ROC">
+<div class="figcap">图1 ROC曲线：训练AUC 0.912 / 验证0.850 / 样本外0.885——三集无过拟合，区分度强</div>
+</div>
+<div class="fig">
+<img src="../../zh_credit/output/charts/ks_curve.png" alt="KS">
+<div class="figcap">图2 KS曲线（样本外2024）：KS=0.639——最优切点处能分离64%的好坏分布差距（信贷行业优秀线0.4）</div>
+</div>
+<div class="fig">
+<img src="../../zh_credit/output/charts/score_distribution.png" alt="ScoreDist">
+<div class="figcap">图3 样本外好坏样本的分数分布：出险公司集中在高概率区，正常公司集中在低概率区——分离清晰</div>
+</div>
+<div class="key">读图结论：模型把"未来一年出险"与"正常"两类公司分得很开（AUC 0.885），且训练/验证/样本外指标接近——没有过拟合，能力真实。</div>
+
+<h2 class="pagebreak">二、模型学到了什么（特征与稳定性）</h2>
+<div class="fig">
+<img src="../../zh_credit/output/charts/feature_importance.png" alt="FI">
+<div class="figcap">图4 特征重要性TOP15：ROE/EPS/ROA/净利率等盈利类霸榜——模型核心依赖"盈利质量"，与信用分析理论一致</div>
+</div>
+<div class="fig">
+<img src="../../zh_credit/output/charts/calibration_trend.png" alt="Cal">
+<div class="figcap">图5 校准趋势：各年度实际坏率与模型平均预测概率走势一致（预测略偏保守），2019-2020年高风险期被模型准确捕捉</div>
+</div>
+<div class="key">读图结论：模型不是黑箱玄学——它学的就是"盈利腰斩＋利润不变现"这一规律（IV排序、特征重要性、压力测试三个独立证据一致）。</div>
+
+<h2 class="pagebreak">三、分行业风险画像</h2>
+<div class="fig">
+<img src="../../zh_credit/output/charts/../industry_analysis/industry_risk_top15.png" alt="Ind">
+<div class="figcap">图6 行业风险率TOP15：建筑装饰13.2%、影视11.8%、钢铁10.6%、房地产10.5%——地产链＋周期</div>
+</div>
+<div class="fig">
+<img src="../../zh_credit/output/charts/../industry_analysis/ownership_risk.png" alt="Own">
+<div class="figcap">图7 所有制风险率：民企6.5% &gt; 国企5.8% &gt; 无实控人4.3%（与联合资信"2025年违约主体69%为民企"方向一致）</div>
+</div>
+
+<h2 class="pagebreak">四、预警清单（2025年报 → 2026年风险）</h2>
+<div class="fig">
+<img src="../../zh_credit/output/charts/warning_list_dist.png" alt="WL">
+<div class="figcap">图8 预警清单TOP50概率分布：前15家概率超过0.9，后段快速衰减——模型给出的"高风险梯队"界限清晰</div>
+</div>
+<table>
+<tr><th>排名</th><th>代码</th><th>名称</th><th>行业</th><th>预警概率</th><th>主要风险特征</th></tr>
+<tr><td>1</td><td>920931</td><td>无锡鼎邦</td><td>专用设备</td><td>0.944</td><td>ROE&lt;3%；净利率&lt;4%；现金流/负债&lt;5%</td></tr>
+<tr><td>2</td><td>300342</td><td>天银机电</td><td>通用设备</td><td>0.942</td><td>ROE&lt;3%；净利率&lt;4%；现金流覆盖弱</td></tr>
+<tr><td>3</td><td>600248</td><td>陕建股份</td><td>土木工程建筑</td><td>0.936</td><td>盈利双低；现金流覆盖弱；负债率&gt;70%</td></tr>
+<tr><td>4</td><td>600740</td><td>山西焦化</td><td>焦化</td><td>0.932</td><td>盈利双低；现金流覆盖弱</td></tr>
+<tr><td>5</td><td>600328</td><td>中盐化工</td><td>化学原料</td><td>0.925</td><td>盈利双低；现金流覆盖弱</td></tr>
+<tr><td>6</td><td>688075</td><td>安旭生物</td><td>医药</td><td>0.925</td><td>ROE&lt;3%；现金流覆盖弱</td></tr>
+<tr><td>7</td><td>600510</td><td>黑牡丹</td><td>房地产</td><td>0.922</td><td>盈利双低；现金流覆盖弱</td></tr>
+<tr><td>8</td><td>002135</td><td>东南网架</td><td>金属制品</td><td>0.920</td><td>盈利双低；现金流覆盖弱</td></tr>
+<tr><td>9</td><td>600010</td><td>包钢股份</td><td>钢铁</td><td>0.915</td><td>盈利双低；现金流覆盖弱</td></tr>
+<tr><td>10</td><td>002419</td><td>天虹股份</td><td>零售</td><td>0.915</td><td>盈利双低；负债率&gt;70%</td></tr>
+</table>
+
+<h2 class="pagebreak">五、平台独立验证（MARVIS 生成）</h2>
+<div class="fig">
+<img src="../../zh_credit/output/charts/platform/roc_ks_graph_train.png" alt="P1">
+<div class="figcap">图9 平台验证-训练集（2019-2022）：AUC 0.912 / KS 0.671</div>
+</div>
+<div class="fig">
+<img src="../../zh_credit/output/charts/platform/roc_ks_graph_test.png" alt="P2">
+<div class="figcap">图10 平台验证-开发验证集（2023）：AUC 0.850 / KS 0.555</div>
+</div>
+<div class="fig">
+<img src="../../zh_credit/output/charts/platform/roc_ks_graph_oot.png" alt="P3">
+<div class="figcap">图11 平台验证-样本外（2024+2025）：AUC 0.882 / KS 0.632——平台独立内核计算结果，与本地评估互相印证</div>
+</div>
+<div class="key">平台侧附加结果：PMML一致性 37,956行零失败；月度PSI vs 训练 0.02（稳定）；压力测试剔除盈利类后KS 0.632→0.106。</div>
+
+<p class="small" style="margin-top:16px">图表数据来源：模型与数据均为本项目实际运行结果（修复后版本）；平台图为 MARVIS 验证工作流产出。</p>
+
+</body>
+</html>
