@@ -1,0 +1,32 @@
+# ===== 安全（绝不提交）=====
+tools/.ifind.env
+*.env
+
+# ===== MARVIS 运行时数据 =====
+workspace/
+
+# ===== 上游源码（不纳入版本控制，README 记录版本即可）=====
+marvis/
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# ===== 系统 =====
+.DS_Store
+
+# 数据文件（可再生，不入库）；例外：ownership_map.csv 为 iFinD 试用产物，token过期后不可再生，强制入库
+zh_credit/data/*
+!zh_credit/data/ownership_map.csv
+
+# 简历（含个人隐私，不上传）
+CV/
+# 内部求职/规划文档（不上传）
+docs/职业路径详细分析-主路径与次路径.pdf
+docs/信用风险预警模型开发计划.pdf
+docs/src/path_analysis.html
+docs/src/credit_risk_plan_v2.html
+docs/src/make_cv3.py
