@@ -2,100 +2,206 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>模型结果图表报告</title>
+<title>模型结果图表报告（含解读）</title>
 <style>
   @page { size: A4; margin: 1.5cm 1.4cm; }
-  body { font-family: "PingFang SC", "Songti SC", serif; font-size: 10.5pt; line-height: 1.65; color: #1a1a1a; margin: 0; }
+  body { font-family: "PingFang SC", "Songti SC", serif; font-size: 10.5pt; line-height: 1.7; color: #1a1a1a; margin: 0; }
   h1 { font-size: 19pt; color: #0d3b66; margin-bottom: 4px; }
   h2 { font-size: 13pt; color: #0d3b66; border-bottom: 2px solid #0d3b66; padding-bottom: 4px; margin-top: 18px; }
+  h3 { font-size: 11.5pt; color: #1d5a94; margin-top: 12px; margin-bottom: 4px; }
   p { margin: 4px 0 8px 0; }
-  table { border-collapse: collapse; width: 100%; margin: 8px 0 14px 0; font-size: 9.5pt; table-layout: fixed; }
-  th { background: #0d3b66; color: #fff; padding: 5px 7px; text-align: left; }
-  td { border: 1px solid #b8c4d0; padding: 5px 7px; vertical-align: top; }
-  img { width: 100%; max-width: 620px; display: block; margin: 6px auto; }
+  table { border-collapse: collapse; width: 100%; margin: 8px 0 14px 0; font-size: 9pt; table-layout: fixed; }
+  th { background: #0d3b66; color: #fff; padding: 5px 7px; text-align: left; word-wrap: break-word; }
+  td { border: 1px solid #b8c4d0; padding: 5px 7px; vertical-align: top; word-wrap: break-word; }
+  img { width: 100%; max-width: 600px; display: block; margin: 6px auto; }
   .meta { color: #666; font-size: 10pt; margin-bottom: 14px; }
-  .fig { margin: 10px 0; page-break-inside: avoid; }
+  .fig { margin: 8px 0; page-break-inside: avoid; }
   .figcap { font-size: 9.5pt; color: #555; text-align: center; margin-top: 2px; }
+  .read { background: #f2f6fa; border-left: 4px solid #0d3b66; padding: 8px 12px; margin: 8px 0; }
+  .read b { color: #0d3b66; }
   .key { background: #eef7ee; border-left: 4px solid #2e7d32; padding: 8px 12px; margin: 8px 0; }
+  .warn { background: #fdf3e7; border-left: 4px solid #c77b1e; padding: 8px 12px; margin: 8px 0; }
   .pagebreak { page-break-before: always; }
+  .small { font-size: 9pt; color: #666; }
+  .term { font-weight: bold; color: #0d3b66; }
 </style>
 </head>
 <body>
 
-<h1>中国发债主体信用风险预警模型 — 结果图表报告</h1>
-<div class="meta">作者：章建军 ｜ 2026年8月20日 ｜ 全部图表基于修复后数据与生产模型生成（与平台验证一致）</div>
+<h1>中国发债主体信用风险预警模型 — 结果图表报告（含逐图解读）</h1>
+<div class="meta">作者：章建军 ｜ 2026年8月20日 ｜ 本报告面向初次接触机器学习/信用分析的读者：每张图先讲"怎么看"，再讲"看到了什么"。全部图表基于修复后数据与生产模型生成。</div>
 
-<h2>一、模型区分能力</h2>
-<div class="fig">
-<img src="../../zh_credit/output/charts/roc_curve.png" alt="ROC">
-<div class="figcap">图1 ROC曲线：训练AUC 0.912 / 验证0.850 / 样本外0.885——三集无过拟合，区分度强</div>
-</div>
-<div class="fig">
-<img src="../../zh_credit/output/charts/ks_curve.png" alt="KS">
-<div class="figcap">图2 KS曲线（样本外2024）：KS=0.639——最优切点处能分离64%的好坏分布差距（信贷行业优秀线0.4）</div>
-</div>
-<div class="fig">
-<img src="../../zh_credit/output/charts/score_distribution.png" alt="ScoreDist">
-<div class="figcap">图3 样本外好坏样本的分数分布：出险公司集中在高概率区，正常公司集中在低概率区——分离清晰</div>
-</div>
-<div class="key">读图结论：模型把"未来一年出险"与"正常"两类公司分得很开（AUC 0.885），且训练/验证/样本外指标接近——没有过拟合，能力真实。</div>
-
-<h2 class="pagebreak">二、模型学到了什么（特征与稳定性）</h2>
-<div class="fig">
-<img src="../../zh_credit/output/charts/feature_importance.png" alt="FI">
-<div class="figcap">图4 特征重要性TOP15：ROE/EPS/ROA/净利率等盈利类霸榜——模型核心依赖"盈利质量"，与信用分析理论一致</div>
-</div>
-<div class="fig">
-<img src="../../zh_credit/output/charts/calibration_trend.png" alt="Cal">
-<div class="figcap">图5 校准趋势：各年度实际坏率与模型平均预测概率走势一致（预测略偏保守），2019-2020年高风险期被模型准确捕捉</div>
-</div>
-<div class="key">读图结论：模型不是黑箱玄学——它学的就是"盈利腰斩＋利润不变现"这一规律（IV排序、特征重要性、压力测试三个独立证据一致）。</div>
-
-<h2 class="pagebreak">三、分行业风险画像</h2>
-<div class="fig">
-<img src="../../zh_credit/output/charts/../industry_analysis/industry_risk_top15.png" alt="Ind">
-<div class="figcap">图6 行业风险率TOP15：建筑装饰13.2%、影视11.8%、钢铁10.6%、房地产10.5%——地产链＋周期</div>
-</div>
-<div class="fig">
-<img src="../../zh_credit/output/charts/../industry_analysis/ownership_risk.png" alt="Own">
-<div class="figcap">图7 所有制风险率：民企6.5% &gt; 国企5.8% &gt; 无实控人4.3%（与联合资信"2025年违约主体69%为民企"方向一致）</div>
-</div>
-
-<h2 class="pagebreak">四、预警清单（2025年报 → 2026年风险）</h2>
-<div class="fig">
-<img src="../../zh_credit/output/charts/warning_list_dist.png" alt="WL">
-<div class="figcap">图8 预警清单TOP50概率分布：前15家概率超过0.9，后段快速衰减——模型给出的"高风险梯队"界限清晰</div>
-</div>
+<h2>〇、指标速查表（先认识这些词，再看图）</h2>
 <table>
-<tr><th>排名</th><th>代码</th><th>名称</th><th>行业</th><th>预警概率</th><th>主要风险特征</th></tr>
-<tr><td>1</td><td>920931</td><td>无锡鼎邦</td><td>专用设备</td><td>0.944</td><td>ROE&lt;3%；净利率&lt;4%；现金流/负债&lt;5%</td></tr>
-<tr><td>2</td><td>300342</td><td>天银机电</td><td>通用设备</td><td>0.942</td><td>ROE&lt;3%；净利率&lt;4%；现金流覆盖弱</td></tr>
-<tr><td>3</td><td>600248</td><td>陕建股份</td><td>土木工程建筑</td><td>0.936</td><td>盈利双低；现金流覆盖弱；负债率&gt;70%</td></tr>
-<tr><td>4</td><td>600740</td><td>山西焦化</td><td>焦化</td><td>0.932</td><td>盈利双低；现金流覆盖弱</td></tr>
-<tr><td>5</td><td>600328</td><td>中盐化工</td><td>化学原料</td><td>0.925</td><td>盈利双低；现金流覆盖弱</td></tr>
-<tr><td>6</td><td>688075</td><td>安旭生物</td><td>医药</td><td>0.925</td><td>ROE&lt;3%；现金流覆盖弱</td></tr>
-<tr><td>7</td><td>600510</td><td>黑牡丹</td><td>房地产</td><td>0.922</td><td>盈利双低；现金流覆盖弱</td></tr>
-<tr><td>8</td><td>002135</td><td>东南网架</td><td>金属制品</td><td>0.920</td><td>盈利双低；现金流覆盖弱</td></tr>
-<tr><td>9</td><td>600010</td><td>包钢股份</td><td>钢铁</td><td>0.915</td><td>盈利双低；现金流覆盖弱</td></tr>
-<tr><td>10</td><td>002419</td><td>天虹股份</td><td>零售</td><td>0.915</td><td>盈利双低；负债率&gt;70%</td></tr>
+<tr><th style="width:16%">术语</th><th style="width:44%">含义（人话版）</th><th style="width:18%">取值范围</th><th>好坏标准</th></tr>
+<tr><td class="term">AUC</td><td>曲线下面积。直观理解：<b>随机抽一个"真出险"公司和一个"真正常"公司，模型给前者打分更高的概率</b>。0.5=抛硬币，1.0=完美</td><td>0.5 ~ 1.0</td><td>≥0.8 强区分；≥0.9 极强</td></tr>
+<tr><td class="term">KS</td><td>把样本按分数从低到高排序，画"坏样本累计占比"与"好样本累计占比"两条曲线，<b>两条线的最大垂直距离</b>就是 KS。可以理解为"模型在最优点能把好坏分开多少"</td><td>0 ~ 1</td><td>≥0.3 可用；≥0.4 优秀；≥0.6 极强</td></tr>
+<tr><td class="term">FPR（假阳性率）</td><td>ROC 图的横轴：<b>被模型误判为高风险的好公司比例</b>（"冤枉率"）。FPR=0.1 表示10%的好公司被误标为高风险</td><td>0 ~ 1</td><td>越低越好</td></tr>
+<tr><td class="term">TPR（真阳性率）</td><td>ROC 图的纵轴：<b>被模型正确识别出的坏公司比例</b>（"抓中率"）。TPR=0.8 表示80%的坏公司被标出</td><td>0 ~ 1</td><td>越高越好</td></tr>
+<tr><td class="term">PSI</td><td>群体稳定性指数：模型在不同时期的<b>分数分布漂移程度</b>。上线后若客户结构变了，分数分布会漂，PSI 变大</td><td>≥0</td><td>&lt;0.1 稳定；0.1-0.25 关注；&gt;0.25 重建</td></tr>
+<tr><td class="term">IV</td><td>信息量：<b>单个指标对"好坏"的区分能力</b>，用于特征筛选（详见文字报告第5章）</td><td>≥0</td><td>&lt;0.02 剔除；&gt;0.3 强</td></tr>
+<tr><td class="term">特征重要性</td><td>XGBoost 内部统计：<b>每个特征在多少决策树分裂中被用来做判断</b>（归一化后和为1）。越大说明模型越依赖它</td><td>0 ~ 1（归一化）</td><td>TOP特征应是业务上说得通的</td></tr>
+<tr><td class="term">校准（Calibration）</td><td>模型的<b>预测概率是否贴近真实比例</b>。若模型说"概率30%"，实际100家里真有约30家出险，就是校准良好</td><td>—</td><td>预测线贴近实际线</td></tr>
+<tr><td class="term">预警概率</td><td>模型输出的"未来一年发生信用风险事件（首次亏损/违约）的概率"，用于<b>排序</b>而非绝对断言</td><td>0 ~ 1</td><td>排序用；越高越优先复核</td></tr>
 </table>
 
-<h2 class="pagebreak">五、平台独立验证（MARVIS 生成）</h2>
+<h2 class="pagebreak">一、模型区分能力（3张图）</h2>
+<h3>图1 ROC 曲线</h3>
+<div class="fig">
+<img src="../../zh_credit/output/charts/roc_curve.png" alt="ROC">
+<div class="figcap">训练（蓝）AUC 0.912 ｜ 验证（浅蓝）AUC 0.850 ｜ 样本外（橙）AUC 0.885 ｜ 虚线=随机水平0.5</div>
+</div>
+<div class="read"><b>📖 怎么读这张图：</b>
+<ol>
+<li>先看<b>对角线虚线</b>——那是"瞎猜"的基准线（AUC=0.5）。任何一条真实曲线都应在它上方；</li>
+<li>曲线<b>越贴近左上角</b>越好：左上角意味着"在冤枉很少好公司的前提下（FPR小），抓到很多坏公司（TPR大）"；</li>
+<li>三条曲线分别是三个时间段的模型表现——<b>训练集是"做过的题"，验证/样本外是"没见过的题"</b>。判断过拟合就看它们差多远：三条线接近=没死记硬背；</li>
+<li>每个曲线的"曲线下面积"即 AUC——面积越大，随机抽一对好坏样本、模型排对顺序的概率越高。</li>
+</ol></div>
+<div class="key"><b>✅ 看到了什么：</b>三条线都远离对角线、彼此接近（0.85-0.91）——模型在"没见过的年份"（样本外0.885）依然保持强区分力，<b>没有过拟合</b>。AUC 0.885 意味着：随机抽一个出险公司和一个正常公司，模型把出险公司排前面的概率约 88.5%。</div>
+
+<h3>图2 KS 曲线</h3>
+<div class="fig">
+<img src="../../zh_credit/output/charts/ks_curve.png" alt="KS">
+<div class="figcap">样本外（2024）：红=坏样本累计占比，绿=好样本累计占比，KS=0.639</div>
+</div>
+<div class="read"><b>📖 怎么读这张图：</b>
+<ol>
+<li>横轴是把所有公司按模型分数<b>从低到高</b>排列的位置（左边=模型认为最危险的，右边=最安全的）；</li>
+<li>绿线（好样本累计占比）在左边低、右边高——因为好公司大多分数高（排在右边）；红线（坏样本）相反；</li>
+<li><b>两条线分得越开，模型越能区分好坏</b>。KS 就是两线最大垂直距离；</li>
+<li>虚线标出 KS 最大处的位置——那是"抓坏最多、冤枉最少"的最佳切点参考。</li>
+</ol></div>
+<div class="key"><b>✅ 看到了什么：</b>KS=0.639（信贷行业优秀线0.4）——在最佳切点处，模型能分离出约64%的好坏累计分布差距；切点位于样本前25%附近，说明"风险最集中的一小撮公司"可以被精准锁定。</div>
+
+<h3>图3 好/坏样本分数分布</h3>
+<div class="fig">
+<img src="../../zh_credit/output/charts/score_distribution.png" alt="ScoreDist">
+<div class="figcap">样本外（2024）：红=出险公司，绿=正常公司；虚线=示例预警线0.30</div>
+</div>
+<div class="read"><b>📖 怎么读这张图：</b>
+<ol>
+<li>横轴=模型给出的风险概率（0=完全安全，1=极度危险）；纵轴=各概率区间的公司数量；</li>
+<li>看<b>两堆柱子的分离程度</b>：如果红色堆在右边、绿色堆在左边、中间重叠少——模型区分能力好；</li>
+<li>重叠区域（中间地带）就是"模型没把握"的公司——业务上通常设为"人工复核区"；</li>
+<li>虚线是示例预警线：线右边的公司进入预警名单。</li>
+</ol></div>
+<div class="key"><b>✅ 看到了什么：</b>红色集中在高概率区、绿色集中在低概率区，重叠带窄——与 ROC/KS 的结论一致。若把预警线设在0.30，能圈住大部分出险公司，同时误伤正常公司有限。</div>
+
+<h2 class="pagebreak">二、模型学到了什么（2张图）</h2>
+<h3>图4 特征重要性 TOP15</h3>
+<div class="fig">
+<img src="../../zh_credit/output/charts/feature_importance.png" alt="FI">
+<div class="figcap">XGBoost 归一化重要性：模型在做判断时最常"看"哪些指标</div>
+</div>
+<div class="read"><b>📖 怎么读这张图：</b>
+<ol>
+<li>柱长=该指标在模型数百棵决策树中被用于分裂判断的累计贡献（归一化）——<b>柱越长，模型越依赖它</b>；</li>
+<li>看柱子集中在哪些类别：如果集中在盈利类（ROE/EPS/ROA/净利率），说明模型主要靠"赚不赚钱"判断风险。</li>
+</ol></div>
+<div class="key"><b>✅ 看到了什么：</b>TOP15 里盈利类占绝对多数（ROE、EPS、ROA、净利率、成本费用利润率），加上现金流含金量（经营现金流/净利润）——<b>模型学的规律是"盈利质量恶化→出险"，与信用分析百年经验一致</b>。这不是黑箱玄学，而是可解释、可辩护的规律。</div>
+
+<h3>图5 校准趋势</h3>
+<div class="fig">
+<img src="../../zh_credit/output/charts/calibration_trend.png" alt="Cal">
+<div class="figcap">各年度：红线=实际坏率（真实出险比例），蓝线=模型平均预测概率</div>
+</div>
+<div class="read"><b>📖 怎么读这张图：</b>
+<ol>
+<li>横轴=财报年份，纵轴=比率；</li>
+<li>红线（实际坏率）是"事后诸葛亮"——当年真的出险的比例；蓝线是模型当年的平均预测——<b>如果两条线走势一致、数值接近，说明模型概率是"可信的"（校准良好）</b>；</li>
+<li>若蓝线长期明显高于红线，说明模型高估风险（过于保守）；反之则过于乐观。</li>
+</ol></div>
+<div class="key"><b>✅ 看到了什么：</b>两条线走势同步（2019-2020高风险期都被捕捉，2023-2024回落也一致），蓝线略高于红线（模型偏保守，符合风控习惯——宁可多预警不可漏掉）。</div>
+
+<h2 class="pagebreak">三、分行业风险画像（2张图）</h2>
+<h3>图6 行业风险率 TOP15</h3>
+<div class="fig">
+<img src="../../zh_credit/output/charts/../industry_analysis/industry_risk_top15.png" alt="Ind">
+<div class="figcap">2019-2024年各行业信用风险事件发生率（正样本占比）TOP15</div>
+</div>
+<div class="read"><b>📖 怎么读这张图：</b>
+<ol>
+<li>横轴=风险率（该行业样本中"未来一年出险"的比例），纵轴=行业；</li>
+<li>柱越长=该行业平均风险越高。<b>注意这是"发生率"不是"违约率"</b>——包含首次亏损等早期信号；</li>
+<li>对比基准：全市场平均约5.2%——柱长明显超过5%的行业值得重点关注。</li>
+</ol></div>
+<div class="key"><b>✅ 看到了什么：</b>建筑装饰13.2%（地产链垫资施工）、影视11.8%（可选消费+高经营杠杆）、钢铁10.6%（周期下行）、房地产10.5%（出清期）——<b>高风险行业=地产链+周期+弱现金流</b>，与中国债市真实违约分布吻合（如2021-2024地产违约潮、钢铁行业连年亏损）。</div>
+
+<h3>图7 所有制风险率</h3>
+<div class="fig">
+<img src="../../zh_credit/output/charts/../industry_analysis/ownership_risk.png" alt="Own">
+<div class="figcap">民企 6.5% ＞ 国企 5.8% ＞ 无实控人 4.3%</div>
+</div>
+<div class="read"><b>📖 怎么读这张图：</b>
+<ol>
+<li>三根柱=三种所有制背景公司的整体风险率；</li>
+<li>差距虽然只有1-2个百分点，但放在数万样本上是<b>统计上稳定</b>的差异；</li>
+<li>结合行业看更有意思：畜牧业民企16.7%（正邦、雏鹰等养殖周期股）、钢铁国企13.5%——<b>行业周期常常比所有制更决定风险</b>。</li>
+</ol></div>
+<div class="key"><b>✅ 看到了什么：</b>民企风险高于国企（缺乏政府隐性背书），但差距小于直觉——因为样本里大量"非违约性亏损"稀释了所有制差异；真正的违约样本中民企占比更高（联合资信：2025年新增违约主体69%为民企）。</div>
+
+<h2 class="pagebreak">四、预警清单（1张图＋名单）</h2>
+<h3>图8 预警清单 TOP50 概率分布</h3>
+<div class="fig">
+<img src="../../zh_credit/output/charts/warning_list_dist.png" alt="WL">
+<div class="figcap">对2025年报全市场打分，风险最高50家的概率分布</div>
+</div>
+<div class="read"><b>📖 怎么读这张图：</b>
+<ol>
+<li>横轴=预警名单排序（1=风险最高），纵轴=模型概率；</li>
+<li>看曲线的<b>形状</b>：前段陡峭（前十几家概率0.90+）=模型给出了清晰的"高危梯队"；若整条线平坦，说明名单内部区分度弱；</li>
+<li>虚线0.50参考线：线以上是模型把握度较高的部分。</li>
+</ol></div>
+<div class="key"><b>✅ 看到了什么：</b>前15家概率超过0.90，随后快速衰减——高风险梯队边界清晰。名单头部（无锡鼎邦0.944、天银机电0.942、陕建股份0.936）的共性风险特征是"ROE&lt;3%＋净利率&lt;4%＋经营现金流/负债&lt;5%"——正是图4/图5揭示的规律在个体上的体现。</div>
+
+<h3>预警名单 TOP10（2025年报 → 2026年风险）</h3>
+<table>
+<tr><th>排名</th><th>代码</th><th>名称</th><th>行业</th><th>所有制</th><th>预警概率</th><th>主要风险特征</th></tr>
+<tr><td>1</td><td>920931</td><td>无锡鼎邦</td><td>专用设备</td><td>—</td><td>0.944</td><td>ROE&lt;3%；净利率&lt;4%；现金流/负债&lt;5%</td></tr>
+<tr><td>2</td><td>300342</td><td>天银机电</td><td>通用设备</td><td>民企</td><td>0.942</td><td>ROE&lt;3%；净利率&lt;4%；现金流覆盖弱</td></tr>
+<tr><td>3</td><td>600248</td><td>陕建股份</td><td>土木工程建筑</td><td>国企</td><td>0.936</td><td>盈利双低；现金流覆盖弱；负债率&gt;70%</td></tr>
+<tr><td>4</td><td>600740</td><td>山西焦化</td><td>焦化</td><td>国企</td><td>0.932</td><td>盈利双低；现金流覆盖弱</td></tr>
+<tr><td>5</td><td>600328</td><td>中盐化工</td><td>化学原料</td><td>国企</td><td>0.925</td><td>盈利双低；现金流覆盖弱</td></tr>
+<tr><td>6</td><td>688075</td><td>安旭生物</td><td>医药</td><td>民企</td><td>0.925</td><td>ROE&lt;3%；现金流覆盖弱</td></tr>
+<tr><td>7</td><td>600510</td><td>黑牡丹</td><td>房地产</td><td>民企</td><td>0.922</td><td>盈利双低；现金流覆盖弱</td></tr>
+<tr><td>8</td><td>002135</td><td>东南网架</td><td>金属制品</td><td>民企</td><td>0.920</td><td>盈利双低；现金流覆盖弱</td></tr>
+<tr><td>9</td><td>600010</td><td>包钢股份</td><td>钢铁</td><td>国企</td><td>0.915</td><td>盈利双低；现金流覆盖弱</td></tr>
+<tr><td>10</td><td>002419</td><td>天虹股份</td><td>零售</td><td>国企</td><td>0.915</td><td>盈利双低；负债率&gt;70%</td></tr>
+</table>
+<div class="warn"><b>⚠️ 名单使用边界：</b>预警概率是"风险事件（首次亏损/违约）"概率，不是违约概率；排序可信、断言不可信——正确用法是"对名单启动人工尽调"（审计意见、舆情、现金流明细），不是直接定罪。城投/非上市主体不在样本。</div>
+
+<h2 class="pagebreak">五、平台独立验证（3张图，MARVIS 生成）</h2>
+<p>以下三张图由开源验证平台 MARVIS 的<b>独立计算内核</b>生成（不是本项目代码自报）——作用是"第二套独立实现复核第一套"，两套结果一致才算数。</p>
+<h3>图9-11 平台 ROC/KS（训练/验证/样本外）</h3>
 <div class="fig">
 <img src="../../zh_credit/output/charts/platform/roc_ks_graph_train.png" alt="P1">
-<div class="figcap">图9 平台验证-训练集（2019-2022）：AUC 0.912 / KS 0.671</div>
+<div class="figcap">平台验证-训练集：AUC 0.912 / KS 0.671</div>
 </div>
 <div class="fig">
 <img src="../../zh_credit/output/charts/platform/roc_ks_graph_test.png" alt="P2">
-<div class="figcap">图10 平台验证-开发验证集（2023）：AUC 0.850 / KS 0.555</div>
+<div class="figcap">平台验证-开发验证集（2023）：AUC 0.850 / KS 0.555</div>
 </div>
 <div class="fig">
 <img src="../../zh_credit/output/charts/platform/roc_ks_graph_oot.png" alt="P3">
-<div class="figcap">图11 平台验证-样本外（2024+2025）：AUC 0.882 / KS 0.632——平台独立内核计算结果，与本地评估互相印证</div>
+<div class="figcap">平台验证-样本外（2024+2025）：AUC 0.882 / KS 0.632</div>
 </div>
-<div class="key">平台侧附加结果：PMML一致性 37,956行零失败；月度PSI vs 训练 0.02（稳定）；压力测试剔除盈利类后KS 0.632→0.106。</div>
+<div class="read"><b>📖 怎么读这三张图：</b>
+<ol>
+<li>每张图左侧是 ROC 曲线（读法见图1），右侧是 KS 曲线（读法见图2），同图双视图；</li>
+<li>三张图分别对应三个时间段——<b>重点看"样本外"那张</b>（模型没见过的2024-2025年数据）：AUC 0.882/KS 0.632；</li>
+<li>与本地计算（图1：样本外AUC 0.885）对比：<b>两套独立实现算出 0.882 vs 0.885</b>——量级一致，互相印证。</li>
+</ol></div>
+<div class="key"><b>✅ 看到了什么：</b>平台独立验证通过：PMML 一致性 37,956 行零失败（"训练时的模型"与"要投产的模型文件"是同一个）；月度 PSI 0.02（上线后分数分布几乎不漂移）；压力测试剔除盈利类特征后 KS 0.632→0.106（再次印证盈利质量是核心信号）。</div>
 
-<p class="small" style="margin-top:16px">图表数据来源：模型与数据均为本项目实际运行结果（修复后版本）；平台图为 MARVIS 验证工作流产出。</p>
+<h2>六、读完全部图后的三句话总结</h2>
+<ol>
+<li><b>模型是真的强</b>：三套独立证据（本地计算、平台计算、PMML一致性）指向同一结论——样本外 AUC≈0.88、KS≈0.63，无过拟合；</li>
+<li><b>模型学的是真规律</b>：特征重要性、压力测试、出险画像三方面都指向"盈利与现金流质量恶化先于出险"——与百年信用分析经验一致；</li>
+<li><b>模型的产出是"排序"不是"判决"</b>：预警名单给出优先级，最终结论需要人工尽调——这正是"量化初筛＋基本面终审"的定位。</li>
+</ol>
+
+<p class="small" style="margin-top:14px">全部图表基于修复后数据与生产模型生成；平台图为 MARVIS 验证工作流产出；术语速查表覆盖本报告所有指标。</p>
 
 </body>
 </html>
