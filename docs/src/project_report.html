@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>中国发债主体信用风险预警模型——项目报告</title>
+<style>
+  @page { size: A4; margin: 1.6cm 1.5cm; }
+  body { font-family: "PingFang SC", "Songti SC", serif; font-size: 10.5pt; line-height: 1.65; color: #1a1a1a; margin: 0; }
+  h1 { font-size: 19pt; color: #0d3b66; margin-bottom: 4px; }
+  h2 { font-size: 14pt; color: #0d3b66; border-bottom: 2px solid #0d3b66; padding-bottom: 4px; margin-top: 20px; }
+  h3 { font-size: 12pt; color: #1d5a94; margin-top: 14px; margin-bottom: 6px; }
+  p { margin: 4px 0 8px 0; }
+  ul, ol { margin: 4px 0 10px 0; padding-left: 20px; }
+  li { margin-bottom: 3px; }
+  table { border-collapse: collapse; width: 100%; margin: 8px 0 14px 0; font-size: 9.5pt; table-layout: fixed; }
+  th { background: #0d3b66; color: #fff; padding: 5px 7px; text-align: left; word-wrap: break-word; }
+  td { border: 1px solid #b8c4d0; padding: 5px 7px; vertical-align: top; word-wrap: break-word; }
+  .meta { color: #666; font-size: 10pt; margin-bottom: 16px; }
+  .box { background: #f2f6fa; border-left: 4px solid #0d3b66; padding: 8px 12px; margin: 10px 0; }
+  .warn { background: #fdf3e7; border-left: 4px solid #c77b1e; padding: 8px 12px; margin: 10px 0; }
+  .pagebreak { page-break-before: always; }
+  .small { font-size: 9pt; color: #666; }
+</style>
+</head>
+<body>
+
+<h1>中国发债主体信用风险预警模型 — 项目报告</h1>
+<div class="meta">作者：章建军 ｜ 日期：2026年8月20日 ｜ 平台：基于开源 MARVIS-Agent v2.3.2（MIT）二次开发<br>
+数据：akshare / 同花顺 iFinD / 巨潮 ｜ 版本：v1.0（含审计修复）</div>
+
+<h2>1. 项目概述</h2>
+<h3>1.1 目标</h3>
+<p>用 A股上市公司（含发债主体）财务数据构建<b>信用风险事件预警评分</b>，定位是信评/风控的<b>量化初筛工具</b>：对最新一期财报主体输出风险排序与预警清单，辅助信用研究的人工复核（"量化初筛＋基本面终审"）。</p>
+<h3>1.2 定位声明（诚实边界）</h3>
+<ul>
+<li>模型目标是<b>风险排序与提前预警</b>，不输出精确违约概率的绝对断言；</li>
+<li>样本为"上市公司中的发债主体"；城投与未上市主体依赖区域财政与政策判断，不在量化模型范围；</li>
+<li>信用研究业界做法是"评级＋规则＋舆情＋人工复核"，本模型定位为其中量化筛选一环。</li>
+</ul>
+
+<h2>2. 数据</h2>
+<h3>2.1 样本构建</h3>
+<table>
+<tr><th>项</th><th>内容</th></tr>
+<tr><td>样本</td><td>5,468 家 A股非金融上市公司 × 2019–2025 年报 = 37,956 行面板</td></tr>
+<tr><td>数据源</td><td>akshare 财务指标接口（新浪源）；行业=巨潮证监会分类（覆盖89%）；实控人=同花顺 iFinD 批量接口（覆盖91%）</td></tr>
+<tr><td>时间切分</td><td>2019–2022 训练 / 2023 开发验证 / 2024+2025 样本外（金融时序纪律，不用随机 KFold）</td></tr>
+<tr><td>清洗</td><td>金融行业剔除；1%/99% 缩尾（训练集分位，防泄漏）；中位数填充（训练集拟合）</td></tr>
+</table>
+<h3>2.2 标签定义（综合信用风险事件）</h3>
+<ul>
+<li><b>主事件：首次年度亏损</b>（EPS 由正转负）——中国财务困境研究的通行代理（ST 触发条件为连续亏损），时点干净无前视偏差：T 年财报（T+1年4月30日可得）预测 T+1 年首次亏损；</li>
+<li><b>增强事件：债券违约</b>（公开可验证的 A股违约主体名单，default_year == T+1 的行标正）；</li>
+<li>正样本 1,986（5.23%），年份分布均匀（每年 280–400）；</li>
+<li>学术依据：中国上市公司财务困境研究以 ST 为核心标志（无美国式破产制度），"首次亏损→连续亏损→ST"是标准恶化路径。</li>
+</ul>
+<h3>2.3 特征体系（49 个）</h3>
+<ul>
+<li>水平特征 26 个：盈利（ROE/ROA/净利率/营业利润率）、偿债（资产负债率/流动比率/速动比率/现金比率/利息保障）、现金流质量（经营现金流/净利润、/营收、/负债）、营运（应收/存货/总资产周转）、成长（营收/净利/总资产增速）、每股（EPS/BPS）、规模（总资产对数）；</li>
+<li>趋势特征 Δ 6 个（关键指标同比变化——"趋势比水平更重要"）；</li>
+<li>缺失指示变量（缺失率&gt;5% 的列）；</li>
+<li>IV&gt;0.02 筛选后 25–27 个入模；IV TOP：roe(0.99)、eps(0.98)、roa(0.95)、net_margin(0.60)——盈利类主导，符合信用分析先验。</li>
+</ul>
+
+<h2 class="pagebreak">3. 方法论</h2>
+<h3>3.1 特征处理（手写实现，可现场讲原理）</h3>
+<ul>
+<li>等频分箱（训练集拟合，缺失单独成箱，WOE +0.5 平滑防零箱）；</li>
+<li>WOE/IV 计算（坏占比-好占比）×WOE 的 IV 公式；</li>
+<li>评分卡刻度：Score = Offset + Factor×ln(odds)，PDO=20、odds=1:1→600 分（LR 主模型输出可解释评分卡）。</li>
+</ul>
+<h3>3.2 双模型</h3>
+<table>
+<tr><th>模型</th><th>定位</th><th>测试集（2024）</th></tr>
+<tr><td>WOE 逻辑回归</td><td>可解释主模型（银行风控标准，输出评分卡）</td><td>AUC 0.864 / KS 0.596</td></tr>
+<tr><td>XGBoost</td><td>平台投产验证模型（PMML 工程化、效果更优）</td><td>AUC 0.885 / KS 0.639</td></tr>
+</table>
+<h3>3.3 平台验证（MARVIS 模型验证工作流）</h3>
+<ul>
+<li>Notebook 契约：RMC_SAMPLE_DF / RMC_TARGET_COL / RMC_ALGORITHM / RMC_SCORE_FN 由 Notebook 顶层暴露；</li>
+<li>PMML 一致性：XGB 导出 PMML，平台独立打分 <b>37,956 行全部成功、零失败</b>；</li>
+<li>平台独立效果验证（确定性计算内核）：</li>
+</ul>
+<table>
+<tr><th>数据集</th><th>AUC</th><th>KS</th></tr>
+<tr><td>训练（2019-2022）</td><td>0.912</td><td>0.671</td></tr>
+<tr><td>开发验证（2023）</td><td>0.850</td><td>0.555</td></tr>
+<tr><td>样本外（2024+2025）</td><td>0.882</td><td>0.632</td></tr>
+</table>
+<ul>
+<li>稳定性：月度 PSI vs 训练 0.02（优秀线 0.1）；</li>
+<li>压力测试（按特征类别剔除）：<b>盈利类剔除后 KS 0.632→0.106（Δ-0.526）</b>——模型核心依赖盈利特征，与信用分析先验一致；偿债/现金流类贡献次要但真实。</li>
+</ul>
+
+<h2 class="pagebreak">4. 分行业风险画像（信评视角的核心发现）</h2>
+<h3>4.1 高风险行业 TOP</h3>
+<table>
+<tr><th>行业</th><th>风险事件率</th><th>解读</th></tr>
+<tr><td>建筑装饰、装修</td><td>13.2%</td><td>地产链资金占用、垫资模式</td></tr>
+<tr><td>广播、电视、电影</td><td>11.8%</td><td>可选消费、经营杠杆高</td></tr>
+<tr><td>黑色金属冶炼</td><td>10.6%</td><td>周期下行、产能过剩</td></tr>
+<tr><td>房地产业</td><td>10.5%</td><td>行业出清期（2021-2024违约潮）</td></tr>
+<tr><td>商务服务 / 软件 / 文教 / 环保 / 纺织</td><td>8.1–8.9%</td><td>可选与弱现金流行业</td></tr>
+</table>
+<h3>4.2 出险公司画像（出险前一年的财务特征，vs 正常公司中位数）</h3>
+<table>
+<tr><th>指标</th><th>出险公司</th><th>正常公司</th><th>差异</th></tr>
+<tr><td>ROE(%)</td><td>3.37</td><td>7.74</td><td><b>腰斩</b></td></tr>
+<tr><td>净利率(%)</td><td>4.26</td><td>8.11</td><td><b>腰斩</b></td></tr>
+<tr><td>每股收益(元)</td><td>0.18</td><td>0.40</td><td><b>腰斩</b></td></tr>
+<tr><td>经营现金流/负债</td><td>0.068</td><td>0.140</td><td><b>减半</b></td></tr>
+<tr><td>资产负债率(%)</td><td>40.1</td><td>39.8</td><td>几乎无差异</td></tr>
+<tr><td>流动比率</td><td>1.82</td><td>1.84</td><td>几乎无差异</td></tr>
+</table>
+<div class="box"><b>核心结论：盈利与现金流质量的恶化是比杠杆水平更早、更强的预警信号。</b>
+杠杆类水平指标（资产负债率/流动比率）在出险前区分度弱——因为中国上市公司普遍在"报表层面"维持杠杆指标，而盈利与现金流的恶化先于违约发生。这解释了为何模型 IV TOP 全部是盈利类指标，也解释了压力测试中盈利类剔除后模型崩溃。</div>
+<h3>4.3 所有制维度</h3>
+<ul>
+<li>民企风险率 6.5% &gt; 国企 5.8% &gt; 无实控人 4.3%；</li>
+<li>高风险组合：畜牧业民企 16.7%（正邦、雏鹰等养殖周期股）、钢铁国企 13.5%（行业周期）、地产国企 10.8%；</li>
+<li>联合资信统计：2025 年新增违约主体 69% 为民营企业——与本样本所有制结论方向一致。</li>
+</ul>
+
+<h2 class="pagebreak">5. 预警清单（2025年报，TOP10 示例）</h2>
+<p>对最新一期（2025 年报）全样本打分，输出风险最高的 50 家公司（完整清单见 warning_list_top50.csv）：</p>
+<table>
+<tr><th>代码</th><th>名称</th><th>行业</th><th>所有制</th><th>预警概率</th><th>主要风险特征</th></tr>
+<tr><td>600248</td><td>陕建股份</td><td>土木工程建筑</td><td>国企</td><td>0.936</td><td>ROE&lt;3%；净利率&lt;4%；现金流/负债&lt;5%；负债率&gt;70%</td></tr>
+<tr><td>600740</td><td>山西焦化</td><td>石油煤炭加工</td><td>国企</td><td>0.932</td><td>ROE&lt;3%；净利率&lt;4%；现金流覆盖弱</td></tr>
+<tr><td>600510</td><td>黑牡丹</td><td>房地产业</td><td>民企</td><td>0.922</td><td>ROE&lt;3%；净利率&lt;4%；现金流覆盖弱</td></tr>
+<tr><td>600328</td><td>中盐化工</td><td>化学原料</td><td>国企</td><td>0.925</td><td>ROE&lt;3%；净利率&lt;4%；现金流覆盖弱</td></tr>
+<tr><td>688586</td><td>江航装备</td><td>航空航天设备</td><td>国企</td><td>0.918</td><td>ROE&lt;3%；现金流覆盖弱</td></tr>
+<tr><td colspan="6" class="small">（完整 50 家见输出文件；预警概率为模型对 2026 年发生风险事件的预测分，需基本面复核后使用）</td></tr>
+</table>
+
+<h2>6. 局限与展望（诚实声明）</h2>
+<ul>
+<li><b>样本覆盖</b>：仅上市公司（akshare 现存量主体），已退市主体缺失；城投/非上市发债主体不在范围——模型结论不可外推至城投债定价；</li>
+<li><b>标签代理</b>：主标签为首次亏损（困境早期信号），与 ST/违约存在时间差；违约名单为公开可验证子集（累计 309 家违约主体中的 A股部分），非完整名单；</li>
+<li><b>财务粉饰</b>：模型基于报表数据，无法识别报表粉饰与表外负债——需与舆情、审计意见、实地调研结合（这正是"量化初筛＋基本面终审"定位的原因）；</li>
+<li><b>行业漂移</b>：地产出清期后，地产链风险权重可能下降，模型需按年度重训与 PSI 监控；</li>
+<li><b>展望</b>：接入审计意见、舆情文本（NLP）、区域财政数据（城投扩展）作为 V2 增强。</li>
+</ul>
+
+<h2 class="pagebreak">7. 附录</h2>
+<h3>7.1 技术栈</h3>
+<ul>
+<li>Python 3.12（conda env: marvis）；pandas/sklearn/xgboost；akshare（数据）、iFinD HTTP API（实控人批量）；</li>
+<li>MARVIS-Agent v2.3.2（MIT）：确定性计算内核（分箱/IV/KS/PSI/压力测试）、PMML 验证工作流、报告生成（Excel/Word）；</li>
+<li>JDK17（PMML 评分运行时）；评分卡刻度手写。</li>
+</ul>
+<h3>7.2 复现步骤</h3>
+<pre>
+conda activate marvis
+cd zh_credit
+python data_fetch.py --start-year 2019 --output data/financial_panel.csv   # 1. 数据
+python label_build.py --input data/financial_panel.csv --default-list data/bond_default_list.csv --output data/panel_labeled.csv
+python features.py --input data/panel_labeled.csv --output data/modeling_dataset.csv  # 2. 特征
+python build_modeling_notebook.py && jupyter execute notebooks/modeling.ipynb         # 3. 建模+PMML
+python industry_analysis.py                                                          # 4. 分行业画像
+python warning_list.py                                                               # 5. 预警清单
+# 平台验证：marvis serve → 创建任务(4材料) → 契约确认 → marvis validate &lt;task_id&gt;
+</pre>
+<h3>7.3 关键验收</h3>
+<ul>
+<li>数据：5,468 公司 × 7 年；正样本 1,986（5.23%）；行业覆盖 89%；实控人覆盖 91%；</li>
+<li>模型：测试集 LR AUC 0.864/KS 0.596，XGB AUC 0.885/KS 0.639；平台独立验证样本外 AUC 0.882/KS 0.632；</li>
+<li>工程：PMML 一致性 37,956/37,956 零失败；PSI 0.02；压力测试盈利依赖显著。</li>
+</ul>
+<p class="small" style="margin-top:20px">本报告所有数字均为实际运行结果；项目基于开源 MARVIS-Agent（MIT）二次开发，数据/标签/分析/报告层为本人自建。</p>
+
+</body>
+</html>
