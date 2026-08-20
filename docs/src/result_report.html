@@ -31,6 +31,37 @@
 <h1>中国发债主体信用风险预警模型 — 结果图表报告（含逐图解读）</h1>
 <div class="meta">作者：章建军 ｜ 2026年8月20日 ｜ 本报告面向初次接触机器学习/信用分析的读者：每张图先讲"怎么看"，再讲"看到了什么"。全部图表基于修复后数据与生产模型生成。</div>
 
+
+<h2>〇、缩写全称对照表（先认识缩写，再读报告）</h2>
+<table>
+<tr><th style="width:14%">缩写</th><th style="width:34%">英文全称</th><th style="width:30%">中文含义</th><th>一句话说明</th></tr>
+<tr><td>ROE</td><td>Return on Equity</td><td>净资产收益率</td><td>股东每投入1元赚多少；本项目区分力最强指标（IV=0.99）</td></tr>
+<tr><td>ROA</td><td>Return on Assets</td><td>总资产收益率</td><td>全部资产的赚钱效率</td></tr>
+<tr><td>EPS</td><td>Earnings Per Share</td><td>每股收益</td><td>每1股赚多少；&lt;0 即亏损（标签判定依据）</td></tr>
+<tr><td>BPS</td><td>Book value Per Share</td><td>每股净资产</td><td>每1股背后的家底</td></tr>
+<tr><td>EBIT</td><td>Earnings Before Interest and Taxes</td><td>息税前利润</td><td>还利息前的利润（利息保障倍数的分子）</td></tr>
+<tr><td>EBITDA</td><td>Earnings Before Interest, Taxes, Depreciation and Amortization</td><td>息税折旧摊销前利润</td><td>更接近"经营造血能力"的利润口径</td></tr>
+<tr><td>ST</td><td>Special Treatment</td><td>特别处理</td><td>交易所对问题公司的警示标志（中国版"困境标签"）</td></tr>
+<tr><td>PD</td><td>Probability of Default</td><td>违约概率</td><td>信贷行业标准术语</td></tr>
+<tr><td>WOE</td><td>Weight of Evidence</td><td>证据权重</td><td>把连续数值转换为"风险贡献度"的编码</td></tr>
+<tr><td>IV</td><td>Information Value</td><td>信息量</td><td>单个指标对好坏的区分能力（特征筛选用）</td></tr>
+<tr><td>LR</td><td>Logistic Regression</td><td>逻辑回归</td><td>可解释的分类模型（本项目主模型）</td></tr>
+<tr><td>XGB</td><td>eXtreme Gradient Boosting</td><td>极端梯度提升</td><td>梯度提升树模型（本项目对照/投产模型）</td></tr>
+<tr><td>AUC</td><td>Area Under the Curve</td><td>ROC曲线下面积</td><td>随机抽一对好坏样本，模型排对顺序的概率</td></tr>
+<tr><td>ROC</td><td>Receiver Operating Characteristic</td><td>受试者工作特征曲线</td><td>画"抓中率 vs 冤枉率"的曲线</td></tr>
+<tr><td>KS</td><td>Kolmogorov-Smirnov statistic</td><td>柯尔莫哥洛夫-斯米尔诺夫统计量</td><td>好坏累计分布的最大间距（信贷行业标准指标）</td></tr>
+<tr><td>FPR</td><td>False Positive Rate</td><td>假阳性率（冤枉率）</td><td>好公司被误判为高风险的比例</td></tr>
+<tr><td>TPR</td><td>True Positive Rate</td><td>真阳性率（抓中率）</td><td>坏公司被正确识别的比例</td></tr>
+<tr><td>PSI</td><td>Population Stability Index</td><td>群体稳定性指数</td><td>模型上线后分数分布漂移程度</td></tr>
+<tr><td>odds</td><td>Odds（源自博彩术语）</td><td>几率/赔率</td><td>P/(1−P)：出险概率与不出险概率之比</td></tr>
+<tr><td>PDO</td><td>Points to Double the Odds</td><td>分数翻倍间隔</td><td>分数每增加多少分，odds 翻一倍（本项目20分）</td></tr>
+<tr><td>PMML</td><td>Predictive Model Markup Language</td><td>预测模型标记语言</td><td>模型的标准文件格式（跨系统部署用）</td></tr>
+<tr><td>RMC_*</td><td>Runtime Model Contract（MARVIS平台契约前缀）</td><td>运行时模型契约</td><td>平台验证要求 notebook 暴露的统一接口（RMC_SAMPLE_DF 等）</td></tr>
+<tr><td>API</td><td>Application Programming Interface</td><td>应用程序接口</td><td>程序之间调用数据的标准方式</td></tr>
+<tr><td>CSV</td><td>Comma-Separated Values</td><td>逗号分隔值</td><td>通用表格数据文件格式</td></tr>
+<tr><td>HTTP</td><td>HyperText Transfer Protocol</td><td>超文本传输协议</td><td>网页/接口通信的标准协议</td></tr>
+</table>
+
 <h2>〇、指标速查表（先认识这些词，再看图）</h2>
 <table>
 <tr><th style="width:16%">术语</th><th style="width:44%">含义（人话版）</th><th style="width:18%">取值范围</th><th>好坏标准</th></tr>
